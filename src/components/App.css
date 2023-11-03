@@ -1,0 +1,25 @@
+#appointment-widget-root *{
+
+}
+
+.checkboxes-tags-search-list::-webkit-scrollbar,
+#appointment-widget-root *::-webkit-scrollbar,
+.MuiModal-root *::-webkit-scrollbar{
+    width: 2px;
+    height: 0;
+    background: transparent;
+    border-radius: 10px;
+}
+
+.checkboxes-tags-search-list::-webkit-scrollbar-thumb,
+#appointment-widget-root *::-webkit-scrollbar-thumb,
+.MuiModal-root *::-webkit-scrollbar-thumb{
+    width: 2px;
+    background: #1976d2;
+    border-radius: 10px;
+}
+
+[aria-labelledby="appointment-form"],
+[aria-labelledby="appointment-calendar"]{
+    user-select: none;
+}
