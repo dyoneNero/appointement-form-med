@@ -43,28 +43,30 @@ const Calendar = observer(({scheduleItems, disabled}: ICalendarProps) => {
     const columnRef   = useRef(null);
     return (
         <>
-            <FormControl variant="outlined" fullWidth={true} sx={{mt:'7px'}}>
+            <FormControl variant="outlined" fullWidth={true} sx={{mt:'7px'}} id="calendarInputSize">
                 <InputLabel htmlFor="date">{'Выбрать дату'}</InputLabel>
-                <OutlinedInput
-                    onFocus={() => changeCalendarVisibility(true)}
-                    id="appointment-dateTime"
-                    name="appointment-dateTime"
-                    type={'text'}
-                    value={disabled ? '' : `${selected.dateTime.formattedDate} ${selected.dateTime.formattedTimeBegin}`}
-                    disabled={disabled}
-                    endAdornment={
-                        <InputAdornment position="end">
-                            <IconButton
-                                disabled={disabled}
-                                onClick={() => changeCalendarVisibility(true)}
-                                edge="end"
-                            >
-                                <CalendarToday />
-                            </IconButton>
-                        </InputAdornment>
-                    }
-                    label={'Выбрать дату'}
-                />
+                <div id='calendarInputSize'>
+                    <OutlinedInput
+                        onFocus={() => changeCalendarVisibility(true)}
+                        id="appointment-dateTime"
+                        name="appointment-dateTime"
+                        type={'text'}
+                        value={disabled ? '' : `${selected.dateTime.formattedDate} ${selected.dateTime.formattedTimeBegin}`}
+                        disabled={disabled}
+                        endAdornment={
+                            <InputAdornment position="end">
+                                <IconButton
+                                    disabled={disabled}
+                                    onClick={() => changeCalendarVisibility(true)}
+                                    edge="end"
+                                >
+                                    <CalendarToday />
+                                </IconButton>
+                            </InputAdornment>
+                        }
+                        label={'Выбрать дату'}
+                    />
+                </div>
             </FormControl>
 
             <Dialog

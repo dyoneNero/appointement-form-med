@@ -50,7 +50,7 @@ class OneCDataState {
         }
         try{
             const data: IOneCdata = await this.getAppointmentData();
-
+            console.log(data)
             if (data && data.error){
                 return this.makeResponse(false, data.error);
             }else{
@@ -58,7 +58,7 @@ class OneCDataState {
                     if (Object.keys(data.nomenclature).length > 0){
                         if (Object.keys(data.employees).length > 0){
                             if (data.schedule.length > 0){
-                                this.oneCData = data;
+                                this.oneCData = data; 
                                 return this.makeResponse(true);
                             }
                             else{
@@ -82,7 +82,8 @@ class OneCDataState {
 
     private async getAppointmentData(): Promise<IOneCdata> {
         try {
-            const response = await fetch("https://medprak.ru/wp-widjet/examples/index.php", this.requestParams);
+            const response = await fetch("https://clone.kurskmed.com/widjet/request/GetData.php", this.requestParams);
+            console.log(response)
             if (response.ok) {
 
                 const text = await response.text();
@@ -219,18 +220,29 @@ class OneCDataState {
 
         if(Object.keys(this.data.nomenclature).length > 0)
         {
+            let i = 0;
             for (let uid in this.data.nomenclature)
             {
                 if (!this.data.nomenclature.hasOwnProperty(uid)){
                     throw new Error("Employee uid not found on specialties render");
                 }
 
+                const selectedEmployeeUid = appState.selected.employee.uid;
                 const SelectedSpec = appState.selected.specialty.uid;
-                let renderCondition = (appState.selected.specialty.uid
-                    === this.data.nomenclature[uid].specialtyUid);
+                let renderCondition = false;
 
+                for (let empl in this.data.employees) {
+
+                    let hasSpecialty = this.data.employees[empl].specialties.hasOwnProperty(SelectedSpec)
+                    && this.data.employees[empl].services.hasOwnProperty(uid);
+
+                    if (hasSpecialty && this.data.nomenclature[uid].specialtyUid == SelectedSpec) {
+                        renderCondition = true;
+                    }
+
+                }
+                
                 if (appState.isSelectDoctorBeforeService){
-                    const selectedEmployeeUid = appState.selected.employee.uid;
                     renderCondition = renderCondition && selectedEmployeeUid.length > 0
                         && this.data.employees[selectedEmployeeUid].services.hasOwnProperty(uid);
                 }
@@ -239,19 +251,19 @@ class OneCDataState {
                 {
                     const selectedClinic = appState.selected.clinic.uid;
 
-                    let price = 0;
-                    if (this.data.nomenclature[uid]['prices'].hasOwnProperty(selectedClinic)){
-                        price = Number((this.data.nomenclature[uid]['prices'][selectedClinic]['price']).replace(/\s+/g, ''));
+                    let price = 0; // Инициализируем price как число
+
+                    for (let key in this.data.nomenclature[uid]['prices']) {
+                        if (this.data.nomenclature[uid]['prices'].hasOwnProperty(key)) {
+                            price = Number(this.data.nomenclature[uid]['prices'][key]['price']);
+                        }
                     }
-                    
-                    //!!update
-                    if(this.data.nomenclature[uid].success){
-                        servicesList.push({
-                            uid: uid,
-                            name: `${this.data.nomenclature[uid].name} ${price>0 ? price+"₽" : ""}`,
-                            duration: this.data.nomenclature[uid].duration
-                        });
-                    }
+
+                    servicesList.push({
+                        uid: uid,
+                        name: `${this.data.nomenclature[uid].name} ${price>0 ? price+"₽" : ""}`,
+                        duration: this.data.nomenclature[uid].duration
+                    });
                 }
             }
         }
@@ -263,6 +275,7 @@ class OneCDataState {
                 duration: 0
             });
         }
+
         return servicesList;
     }
 
@@ -276,38 +289,51 @@ class OneCDataState {
             )
         }
         try {
+            
+            
             this.requestParams.body = JSON.stringify(params);
-            const response = await fetch("https://medprak.ru/wp-widjet/request/CreateRequest.php", this.requestParams);
+            const responseSpam = await fetch("https://clone.kurskmed.com/widjet/request/Spam.php", this.requestParams);
 
-            if (response.ok)
-            {
-                //--
-                //!update
-                const spamSuccess = true
-                //--
+            if(responseSpam.ok) {
 
-                const result = await response.json();
+                const resultSpam = await responseSpam.json();
 
-                if (result.error)
-                {
-                    if (result.hasOwnProperty("defaultError")){
-                        console.error(result.defaultError);
+                if(resultSpam == "error") {
+                    appState.isSpam = true
+                    return this.makeResponse(false, 'Spam');
+                }
+                else if (resultSpam == "success") {
+                    this.requestParams.body = JSON.stringify(params);
+                    const response = await fetch("https://clone.kurskmed.com/widjet/request/CreateRequest.php", this.requestParams);
+
+                    if(response.ok) {
+                        const result = await response.json();
+
+                        if(result == "error") {
+                            if (result.hasOwnProperty("defaultError")){
+                                console.error(result.defaultError);
+                            }
+                            return this.makeResponse(false, result.error);
+                        }
+                        else if (result == "success") {
+                            params["email"] ? await this.sendToEmail(params) : void(0);
+                            return this.makeResponse(true);
+                        }
+                        else {
+                            return this.makeResponse(false, 'Can not decode server response.');
+                        }
                     }
-                    return this.makeResponse(false, result.error);
+                    else {
+                        return this.makeResponse(false, 'Can not connect to 1c. Status code - ' + response.status);
+                    }
                 }
-                else if(result.success)
-                {
-                    params["email"] ? await this.sendToEmail(params) : void(0);
-                    return this.makeResponse(true);
+                else {
+                    return this.makeResponse(false, 'Can not connect to 1c. Status code - ' + responseSpam.status);
                 }
-                else
-                {
-                    return this.makeResponse(false, 'Can not decode server response.');
-                }
+                
             }
-            else
-            {
-                return this.makeResponse(false, 'Can not connect to 1c. Status code - ' + response.status);
+            else {
+                return this.makeResponse(false, 'Can not connect to 1c. Status code - ' + responseSpam.status);
             }
         }
         catch(e) {

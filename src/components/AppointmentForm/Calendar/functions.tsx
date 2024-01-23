@@ -4,6 +4,7 @@ import {IScheduleItem, ITimeTableItem} from "../../../types/models";
 import {Stack} from "@mui/material";
 import React from "react";
 import {IService} from "../../../types/selectedData";
+import OneCDataState from "../../../store/OneCDataState";
 
 export function getScheduleItems(){
     const data = dataState.oneCData;
@@ -28,6 +29,7 @@ export function getScheduleItems(){
                 }
                 servicesDurationsSum += serviceDuration;
             })
+
             const renderCustomIntervals = (servicesDurationsSum > 0);
             const timeKey = renderCustomIntervals ? "freeNotFormatted" : "free";
 
@@ -84,40 +86,62 @@ const getIntervalsForServiceDuration = (intervals: Array<ITimeTableItem>, servic
         const appointmentsCount = Math.floor(timeDifference / serviceDurationMs);
         if (appointmentsCount > 0)
         {
-            if (appState.isUseTimeSteps && (serviceDurationMs >= 30*60*1000)) //use timeSteps only for services with duration>=30 minutes
-            {
-                let start   = new Date(timestampTimeBegin);
-                let end     = new Date(timestampTimeBegin + serviceDurationMs);
-                while(end.getTime() <= timestampTimeEnd){
-                    newIntervals.push({
-                        "date": 				day.date,
-                        "timeBegin": 			convertDateToISO(Number(start)),
-                        "timeEnd": 				convertDateToISO(Number(end)),
-                        "formattedDate": 		convertDateToDisplay(Number(start), false),
-                        "formattedTimeBegin": 	convertDateToDisplay(Number(start), true),
-                        "formattedTimeEnd": 	convertDateToDisplay(Number(end), true),
-                    });
-                    start.setMinutes(start.getMinutes() + appState.timeStepDuration);
-                    end.setMinutes(end.getMinutes() + appState.timeStepDuration);
+            OneCDataState.oneCData.schedule.forEach((employeeSchedule: IScheduleItem) => {
+                if (employeeSchedule.clinicUid === appState.selected.clinic.uid && employeeSchedule.refUid === appState.selected.employee.uid) {
+                    if (appState.isUseTimeSteps && employeeSchedule.durationInSeconds != 0) {
+                        const dur = employeeSchedule.durationInSeconds / 60;
+                        let start   = new Date(timestampTimeBegin);
+                        let end     = new Date(timestampTimeBegin + serviceDurationMs);
+                        while(end.getTime() <= timestampTimeEnd){
+                            newIntervals.push({
+                                "date": 				day.date,
+                                "timeBegin": 			convertDateToISO(Number(start)),
+                                "timeEnd": 				convertDateToISO(Number(end)),
+                                "formattedDate": 		convertDateToDisplay(Number(start), false),
+                                "formattedTimeBegin": 	convertDateToDisplay(Number(start), true),
+                                "formattedTimeEnd": 	convertDateToDisplay(Number(end), true),
+                            });
+                            start.setMinutes(start.getMinutes() + dur);
+                            end.setMinutes(end.getMinutes() + dur);
+                        }
+                    }
+                    else {
+                        if (appState.isUseTimeSteps && (serviceDurationMs >= 30*60*1000)) //use timeSteps only for services with duration>=30 minutes
+                        {
+                            let start   = new Date(timestampTimeBegin);
+                            let end     = new Date(timestampTimeBegin + serviceDurationMs);
+                            while(end.getTime() <= timestampTimeEnd){
+                                newIntervals.push({
+                                    "date": 				day.date,
+                                    "timeBegin": 			convertDateToISO(Number(start)),
+                                    "timeEnd": 				convertDateToISO(Number(end)),
+                                    "formattedDate": 		convertDateToDisplay(Number(start), false),
+                                    "formattedTimeBegin": 	convertDateToDisplay(Number(start), true),
+                                    "formattedTimeEnd": 	convertDateToDisplay(Number(end), true),
+                                });
+                                start.setMinutes(start.getMinutes() + appState.timeStepDuration);
+                                end.setMinutes(end.getMinutes() + appState.timeStepDuration);
+                            }
+                        }
+                        else
+                        {
+                            for (let i = 0; i < appointmentsCount; i++)
+                            {
+                                let start = Number(new Date(timestampTimeBegin + (serviceDurationMs * i)));
+                                let end = Number(new Date(timestampTimeBegin + (serviceDurationMs * (i+1))));
+                                newIntervals.push({
+                                    "date": 				day.date,
+                                    "timeBegin": 			convertDateToISO(start),
+                                    "timeEnd": 				convertDateToISO(end),
+                                    "formattedDate": 		convertDateToDisplay(start, false),
+                                    "formattedTimeBegin": 	convertDateToDisplay(start, true),
+                                    "formattedTimeEnd": 	convertDateToDisplay(end, true),
+                                });
+                            }
+                        }
+                    }
                 }
-            }
-            else
-            {
-                for (let i = 0; i < appointmentsCount; i++)
-                {
-                    let start = Number(new Date(timestampTimeBegin + (serviceDurationMs * i)));
-                    let end = Number(new Date(timestampTimeBegin + (serviceDurationMs * (i+1))));
-                    newIntervals.push({
-                        "date": 				day.date,
-                        "timeBegin": 			convertDateToISO(start),
-                        "timeEnd": 				convertDateToISO(end),
-                        "formattedDate": 		convertDateToDisplay(start, false),
-                        "formattedTimeBegin": 	convertDateToDisplay(start, true),
-                        "formattedTimeEnd": 	convertDateToDisplay(end, true),
-                    });
-                }
-            }
-
+            })
         }
     });
     return newIntervals;

@@ -19,7 +19,7 @@ class AppState {
     private readonly DEMO_MODE:                     boolean = false;
     private readonly privacyLink:                   string  = "#";
     private readonly useTimeSteps:                  boolean = true;
-    private readonly timeStepDurationMinutes:       number	= 15;
+    private readonly timeStepDurationMinutes:       number	= 20;
     private readonly strictCheckingOfRelations:     boolean	= true;
     private readonly showDoctorsWithoutDepartment:  boolean = true;
     private readonly useMultipleServices:           boolean = true;
@@ -32,7 +32,8 @@ class AppState {
     private activeStepNumber            = 0;
 
     //!!update
-    private doctorActiveUid = "";
+    private activePopupUid = ""
+    private spam = false;
 
     private selectedValues: ISelectedParams = {
         clinic: {
@@ -78,11 +79,18 @@ class AppState {
     private result: boolean = false;
 
 
-    get isDoctorActiveUid() {
-        return this.doctorActiveUid;
+    get isActivePopupUid() {
+        return this.activePopupUid;
     }
-    set isDoctorActiveUid(value: string){
-        this.doctorActiveUid = value;
+    set isActivePopupUid(value: string){
+        this.activePopupUid = value;
+    }
+
+    get isSpam() {
+        return this.spam;
+    }
+    set isSpam(value: boolean){
+        this.spam = value;
     }
 
     get isLoading() {
@@ -122,6 +130,9 @@ class AppState {
     stepBack = () => {
         this.activeStepNumber--;
     }
+    set setStep(value: number){
+        this.activeStepNumber = value;
+    }
 
     toggleAppointmentForm(open: boolean) {
         if (!open && this.activeStep === 3)
@@ -131,6 +142,8 @@ class AppState {
             this.setSecondStepToDefaults()
         }
         this.isAppOpen = open;
+        //!update
+        this.isActivePopupUid = "";
     }
 
     set validityOfTextFields(val: {[key:string]:boolean}){

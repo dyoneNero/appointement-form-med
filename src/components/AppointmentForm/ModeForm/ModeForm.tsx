@@ -76,7 +76,15 @@ const ModeForm:FC = () => {
                         disabled={!(selected.clinic.uid.length > 0)}
                 >
                     {
-                        specialties.map(specialty =>
+                        specialties.sort(function(a, b) {
+                            if (a.name > b.name) {
+                              return 1;
+                            }
+                            if (a.name < b.name) {
+                              return -1;
+                            }
+                            return 0;
+                          }).map(specialty =>
                             <MenuItem value={specialty.uid} key={specialty.uid} disabled={!(specialty.uid.length > 0)}>
                                 {specialty.name}
                             </MenuItem>)

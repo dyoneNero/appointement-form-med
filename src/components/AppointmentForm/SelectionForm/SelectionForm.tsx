@@ -15,12 +15,10 @@ import {observer} from "mobx-react-lite";
 import Calendar from "../Calendar/Calendar";
 import {IEmployee, ISelectionSetterParams, IService} from "../../../types/selectedData";
 import {getScheduleItems} from "../Calendar/functions";
-import CheckboxesTags from "../../UI/CheckBoxesTags/CheckBoxesTags";
-import {toJS} from "mobx";
 
 const SelectionForm: FC = () => {
     const selected = appState.selected;
-    const startFromDoctor = appState.isSelectDoctorBeforeService;
+    const startFromDoctor = appState.isSelectDoctorBeforeService; 
 
     const setDoctor = (e: any) => {
         const newState: ISelectionSetterParams = {
@@ -42,9 +40,15 @@ const SelectionForm: FC = () => {
         }
         appState.selected = newState;
     }
-    const setService = (value: IService[]) => {
+    const setService = (e: any) => {
         const newState: ISelectionSetterParams = {
-            services: value,
+            services: [
+                {
+                    uid: e.target.value,
+                    name: dataState.getServiceByUid(e.target.value).name,
+                    duration: dataState.getServiceByUid(e.target.value).duration
+                }
+            ],
             dateTime: {
                 date: '',
                 timeBegin: '',
@@ -61,10 +65,11 @@ const SelectionForm: FC = () => {
             }
         }
         appState.selected = newState;
+        console.log(selected.services)
     }
 
     const canRenderEmployees = ((selected.services.length > 0) || startFromDoctor);
-    const canRenderServices = ((selected.employee.uid.length > 0) || !startFromDoctor);
+    const canRenderServices = ((selected.employee.uid.length > 0) || !startFromDoctor );
 
     const scheduleItems = getScheduleItems();
     const calendarDisabled = !((selected.services.length > 0) && (selected.employee.uid.length > 0));
@@ -94,13 +99,13 @@ const SelectionForm: FC = () => {
             let lengthEmployees = dataState.employeesList.length
             
             let randomEmployee = randomNumber(1, lengthEmployees) -  1
-
-            appState.selected.employee.uid = dataState.employeesList[randomEmployee].uid //Работает но с предупреждением MobX
-            appState.selected.employee.name = dataState.employeesList[randomEmployee].name
-            //console.log(appState.selected.employee)
+            
+            if(appState.selected.employee.uid == "" && appState.selected.employee.name == "") {
+                appState.selected.employee.uid = dataState.employeesList[randomEmployee].uid //Работает но с предупреждением MobX
+                appState.selected.employee.name = dataState.employeesList[randomEmployee].name
+            }
         }
         else {
-            //тут можно ебануть вывод ошибки, если доктора по таким услугам нет
         }
     }
 
@@ -150,7 +155,15 @@ const SelectionForm: FC = () => {
                                 disabled={!canRenderEmployees}
                         >
                             {
-                                canRenderEmployees && dataState.employeesList.map(employee =>
+                                canRenderEmployees && dataState.employeesList.sort(function(a, b) {
+                                    if (a.name > b.name) {
+                                      return 1;
+                                    }
+                                    if (a.name < b.name) {
+                                      return -1;
+                                    }
+                                    return 0;
+                                  }).map(employee =>
                                     <MenuItem value={employee.uid} key={employee.uid} disabled={!(employee.uid.length > 0)}>
                                         {employee.name}
                                     </MenuItem>)
@@ -158,8 +171,26 @@ const SelectionForm: FC = () => {
                         </Select>
                     </FormControl>
                     
+                    {/* <FormControl margin={`dense`} fullWidth sx={{order: startFromDoctor?'1':'0'}}>
+                        <InputLabel id="service-select-label">Выберите услугу</InputLabel>
+                        <Select labelId="service-select-search"
+                                id="service-select"
+                                name={'service'}
+                                value={selectedServiceAvailable ? toJS(selected.services) : []}
+                                label='Выберите услуги'
+                                onChange={setDoctor}
+                                disabled={!canRenderServices}
+                        >
+                            {
+                                canRenderServices && dataState.servicesList.map(service =>
+                                    <MenuItem value={service.uid} key={service.uid} disabled={!(service.uid.length > 0)}>
+                                        {service.name}
+                                    </MenuItem>)
+                            }
+                        </Select>
+                    </FormControl> */}
                     
-                    <FormControl  margin={`dense`} fullWidth sx={{order: startFromDoctor?'1':'0'}}>
+                    {/* <FormControl  margin={`dense`} fullWidth sx={{order: startFromDoctor?'1':'0'}}>
                         <CheckboxesTags id={'service-select-search'}
                                         options={
                                             canRenderServices
@@ -180,8 +211,38 @@ const SelectionForm: FC = () => {
                                         valueSetter={setService}
                                         multiple={appState.isUseMultipleServices}
                         />
-                    </FormControl>
+                    </FormControl> */}
 
+                    <FormControl margin={`dense`} fullWidth sx={{order: startFromDoctor?'1':'0'}}>
+                        <InputLabel id="service-select-label">Выберите услугу</InputLabel>
+                        <Select labelId="service-select-label"
+                                id="service-select"
+                                name={'service'}
+                                value={selectedServiceAvailable ? (selected.services.length > 0 ? selected.services[0].uid : "") : ""}
+                                label="Выберите услугу"
+                                onChange={setService}
+                                disabled={!canRenderServices}
+                        >
+                            {
+                                canRenderServices && dataState.servicesList.sort(function(a, b) {
+                                    if (a.name > b.name) {
+                                      return 1;
+                                    }
+                                    if (a.name < b.name) {
+                                      return -1;
+                                    }
+                                    return 0;
+                                  }).map(service =>
+                                    <MenuItem value={service.uid}
+                                              key={service.uid}
+                                              disabled={!(service.uid.length > 0)}
+                                              sx={{whiteSpace: 'normal', borderBottom: '1px solid rgba(0,0,0,.1)'}}
+                                    >
+                                        {service.name}
+                                    </MenuItem>)
+                            }
+                        </Select>
+                    </FormControl>
                     {
                         selected.services.length > 0
                             ?
@@ -194,29 +255,6 @@ const SelectionForm: FC = () => {
                             :
                             ''
                     }
-
-                    {/*<FormControl margin={`dense`} fullWidth sx={{order: startFromDoctor?'1':'0'}}>
-                        <InputLabel id="service-select-label">Выберите услугу</InputLabel>
-                        <Select labelId="service-select-label"
-                                id="service-select"
-                                name={'service'}
-                                value={selectedServiceAvailable ? selected.service.uid : ''}
-                                label="Выберите услугу"
-                                onChange={setService}
-                                disabled={!canRenderServices}
-                        >
-                            {
-                                canRenderServices && dataState.servicesList.map(service =>
-                                    <MenuItem value={service.uid}
-                                              key={service.uid}
-                                              disabled={!(service.uid.length > 0)}
-                                              sx={{whiteSpace: 'normal', borderBottom: '1px solid rgba(0,0,0,.1)'}}
-                                    >
-                                        {service.name}
-                                    </MenuItem>)
-                            }
-                        </Select>
-                    </FormControl>*/}
                 </Box>
 
                 {

@@ -4,24 +4,45 @@ import App from './components/App';
 import {CssBaseline} from "@mui/material";
 import {configure, spy} from "mobx";
 import appState from './store/AppState';
-import activeDoctorOpen from './store/activeDoctorOpen';
-import activeAppointment from './store/activePopup';
 
 
 //!!update
-const buttonSecond = document.querySelectorAll(".appointment-second-btn")
-buttonSecond.forEach(button => {
-    button.addEventListener('click', function(){
-        const uid = String(button.getAttribute("uid"))
-        appState.isDoctorActiveUid = uid
-        activeDoctorOpen(uid)
+const btnAppointmentFirst = document.querySelectorAll(".appointment-first-btn")
+btnAppointmentFirst.forEach(btn => {
+    btn.addEventListener('click', function(){
+        if (btn.getAttribute('uid')) {
+            const buttonUid = String(btn.getAttribute("uid"))
+            appState.isActivePopupUid = buttonUid
+        }
+        else {
+            appState.isActivePopupUid = "null"
+        }
     })
 })
 
-const buttonFirst = document.querySelectorAll(".appointment-first-btn")
-buttonFirst.forEach(button => {
-    button.addEventListener('click', function(){
-        activeAppointment()
+const btnAppointmentSecond = document.querySelectorAll(".appointment-second-btn")
+btnAppointmentSecond.forEach(btn => {
+    btn.addEventListener('click', function(){
+        if (btn.getAttribute('uid')) {
+            const buttonUid = String(btn.getAttribute("uid"))
+            appState.isActivePopupUid = buttonUid
+        }
+        else {
+            appState.isActivePopupUid = "null"
+        }
+    })
+})
+
+const btnAppointmentThird = document.querySelectorAll(".appointment-third-btn")
+btnAppointmentThird.forEach(btn => {
+    btn.addEventListener('click', function(){
+        if (btn.getAttribute('uid')) {
+            const buttonUid = String(btn.getAttribute("uid"))
+            appState.isActivePopupUid = buttonUid
+        }
+        else {
+            appState.isActivePopupUid = "null"
+        }
     })
 })
 
